@@ -55,6 +55,37 @@ button{cursor:pointer;-webkit-tap-highlight-color:transparent}
 .commandes .lecture svg{width:34px;height:34px}
 .message{min-height:22px;margin:12px 0 0;font-size:14px;color:var(--cadran-or)}
 
+/* Mode voiture : lecteur plein écran, gros boutons */
+#b-quitter-voiture{display:none}
+.entrer-voiture{width:100%;margin-top:10px;border:0;border-radius:18px;padding:18px;font-weight:700;font-size:18px;background:var(--cadran-or);color:#0E2A33}
+body.voiture{overflow:hidden}
+body.voiture .cadran{position:fixed;inset:0;z-index:50;border-radius:0;display:flex;flex-direction:column;gap:6px;
+  padding:calc(env(safe-area-inset-top,0px) + 10px) max(14px,env(safe-area-inset-right,0px)) calc(env(safe-area-inset-bottom,0px) + 14px) max(14px,env(safe-area-inset-left,0px))}
+body.voiture #b-quitter-voiture{display:block;align-self:flex-end;border:1.5px solid rgba(255,255,255,.3);background:none;color:var(--cadran-texte);border-radius:14px;padding:12px 18px;font-weight:700;font-size:16px}
+body.voiture #b-reglage{display:none}
+body.voiture .cadran-haut{font-size:20px}
+body.voiture .anneau{width:auto;aspect-ratio:auto;margin:0;flex:1;min-height:0;display:flex;align-items:center;justify-content:center}
+body.voiture .anneau svg{display:none}
+body.voiture .anneau-centre{position:static;padding:0}
+body.voiture .nom-ar{font-size:clamp(52px,17vw,110px)}
+body.voiture .verset{font-size:clamp(32px,10vw,60px);font-weight:700}
+body.voiture .detail{font-size:20px;margin:0;min-height:0}
+body.voiture .detail b{font-size:28px}
+body.voiture .message{font-size:18px;margin:0;min-height:0}
+body.voiture .commandes{flex:none;height:36vh;gap:10px;align-items:stretch;margin-top:8px}
+body.voiture .commandes button{flex:1;width:auto;height:auto;border-radius:30px;background:rgba(255,255,255,.14)}
+body.voiture .commandes .lecture{flex:1.25;width:auto;height:auto;background:var(--cadran-or)}
+body.voiture .commandes svg{width:64px;height:64px}
+body.voiture .commandes .lecture svg{width:84px;height:84px}
+@media (orientation:landscape){
+  body.voiture .cadran{display:grid;grid-template-columns:1fr 1.2fr;grid-template-rows:auto auto 1fr auto auto;column-gap:16px}
+  body.voiture .cadran>*{grid-column:1}
+  body.voiture #b-quitter-voiture{justify-self:start}
+  body.voiture .commandes{grid-column:2;grid-row:1/-1;height:auto;margin-top:0}
+  body.voiture .nom-ar{font-size:clamp(40px,9vw,80px)}
+  body.voiture .verset{font-size:clamp(26px,5vw,44px)}
+}
+
 /* Playlists */
 .rail{display:flex;gap:8px;overflow-x:auto;padding:2px 4px 8px;scrollbar-width:none}
 .rail::-webkit-scrollbar{display:none}
@@ -114,6 +145,7 @@ dialog::backdrop{background:rgba(5,20,25,.6)}
   <h1>Hifz au volant</h1>
 
   <section class="cadran" aria-label="Lecteur">
+    <button id="b-quitter-voiture">Quitter le mode voiture</button>
     <div class="cadran-haut"><span id="p-playlist"></span><b id="p-rang"></b></div>
     <div class="anneau" id="anneau">
       <svg viewBox="0 0 100 100" aria-hidden="true">
@@ -134,6 +166,7 @@ dialog::backdrop{background:rgba(5,20,25,.6)}
     <p class="message" id="message" role="status" aria-live="polite"></p>
     <button class="lien" id="b-reglage" style="color:var(--cadran-or)">Créer une boucle avec les trois boutons</button>
   </section>
+  <button class="entrer-voiture" id="b-voiture">Mode voiture : gros boutons</button>
 
   <h2>Playlists</h2>
   <div class="rail" id="rail"></div>
@@ -151,7 +184,7 @@ dialog::backdrop{background:rgba(5,20,25,.6)}
     <div><dt>Lecture, pause</dt><dd>Mets en pause pour réciter seul, puis reprends.</dd></div>
     <div><dt>Pause puis lecture, vite</dt><dd>Ouvre le réglage : suivant et précédent changent la valeur affichée sur l'écran de la voiture, pause valide. Le premier choix proposé est la suite de ta boucle en cours ; sinon tu choisis la sourate, les versets, les répétitions et le mode, puis la boucle démarre.</dd></div>
   </dl>
-  <p class="note">Lance la lecture une fois sur le téléphone avant de démarrer. Ensuite tout se pilote depuis le volant, ou l'écran « En lecture » de CarPlay. Garde cette page ouverte dans Safari.</p>
+  <p class="note">Le bouton « Mode voiture » sous le lecteur affiche le lecteur en plein écran avec de gros boutons et garde l'écran allumé. Lance la lecture une fois sur le téléphone avant de démarrer. Ensuite tout se pilote depuis le volant, ou l'écran « En lecture » de CarPlay. Garde cette page ouverte dans Safari.</p>
 
   <h2>Réglages</h2>
   <div class="reglages">
@@ -509,6 +542,24 @@ $("b-lecture").onclick = basculer;
 $("b-suiv").onclick = suivant;
 $("b-prec").onclick = precedent;
 
+/* Mode voiture : plein écran, et l'écran reste allumé */
+let verrouEcran = null;
+async function garderEcran(actif) {
+  try {
+    if (actif) { if ("wakeLock" in navigator && !verrouEcran) { verrouEcran = await navigator.wakeLock.request("screen"); verrouEcran.addEventListener("release", () => { verrouEcran = null; }); } }
+    else if (verrouEcran) { const v = verrouEcran; verrouEcran = null; await v.release(); }
+  } catch (_) {}
+}
+function modeVoiture(actif) {
+  etat.voiture = !!actif; enregistrer();
+  document.body.classList.toggle("voiture", etat.voiture);
+  garderEcran(etat.voiture);
+  if (etat.voiture) window.scrollTo(0, 0);
+}
+$("b-voiture").onclick = () => modeVoiture(true);
+$("b-quitter-voiture").onclick = () => modeVoiture(false);
+document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible" && etat.voiture) garderEcran(true); });
+
 $("rail").onclick = ev => {
   const b = ev.target.closest("[data-pl]"); if (!b) return;
   if (b.dataset.pl === "+") {
@@ -691,6 +742,7 @@ $("b-reglage").onclick = () => { if (reg) quitterReglage(); else entrerReglage()
   if (c) { seq = construireSequence(c.b); etat.vue = c.pl.id; chargerEtape(false); }
   else { const f = aPlat(); if (f.length) choisirBoucle(f[0][0], f[0][1], false); }
   majTout();
+  if (etat.voiture) modeVoiture(true);
 })();
 </script>
 </body>
