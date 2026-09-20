@@ -1,0 +1,669 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Hifz au volant</title>
+<meta name="apple-mobile-web-app-title" content="Hifz">
+<meta name="theme-color" content="#0E2A33">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --fond:#E6EEEC; --surface:#F6FAF9; --encre:#0C2A33; --encre-2:#4A656C; --trait:#C5D5D2;
+  --or:#9A7420; --celadon:#2B7D70; --danger:#A8432F;
+  --cadran:#0E2A33; --cadran-2:#16414C; --cadran-texte:#EAF2F0; --cadran-doux:#9DB7B5; --cadran-or:#D9B45B;
+  --ui:"Instrument Sans",-apple-system,"Helvetica Neue",Arial,sans-serif;
+  --ar:"Amiri","Geeza Pro","Noto Naskh Arabic",serif;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){
+  :root{ --fond:#081B21; --surface:#0F2C34; --encre:#EAF2F0; --encre-2:#9DB7B5; --trait:#21474F; --or:#D9B45B; --celadon:#7CC4B7; --danger:#E58A74; --cadran:#11323B; --cadran-2:#1A4651; }
+}
+*,*::before,*::after{box-sizing:inherit}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--fond);color:var(--encre);font:400 16px/1.45 var(--ui)}
+main{max-width:520px;margin:0 auto;padding:14px 14px 40px}
+h1{font-size:15px;font-weight:600;margin:4px 4px 12px;color:var(--encre-2)}
+h2{font-size:20px;font-weight:700;margin:30px 4px 10px;letter-spacing:-.01em}
+button,select,input,textarea{font:inherit;color:inherit}
+button{cursor:pointer;-webkit-tap-highlight-color:transparent}
+:focus-visible{outline:3px solid var(--or);outline-offset:2px}
+
+/* Le cadran : seul élément fort de la page */
+.cadran{background:linear-gradient(170deg,var(--cadran-2),var(--cadran) 55%);color:var(--cadran-texte);border-radius:28px;padding:18px 18px 22px;text-align:center}
+.cadran-haut{display:flex;justify-content:space-between;gap:12px;font-size:14px;color:var(--cadran-doux);text-align:left}
+.cadran-haut b{color:var(--cadran-texte);font-weight:600}
+.anneau{position:relative;width:min(64vw,250px);aspect-ratio:1;margin:14px auto 10px}
+.anneau svg{width:100%;height:100%;transform:rotate(-90deg)}
+.anneau circle{fill:none;stroke-width:5}
+.anneau .piste{stroke:rgba(255,255,255,.12)}
+.anneau .avance{stroke:var(--cadran-or);stroke-linecap:round;transition:stroke-dashoffset .25s linear}
+.anneau-centre{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:26px}
+.nom-ar{font:700 clamp(34px,11vw,46px)/1.25 var(--ar);direction:rtl}
+.verset{font-size:17px;font-weight:600;margin-top:2px}
+.a-toi .nom-ar{color:var(--cadran-or)}
+.detail{font-size:15px;color:var(--cadran-doux);min-height:44px;margin:0 0 14px}
+.detail b{display:block;color:var(--cadran-texte);font-weight:600;font-size:17px}
+.commandes{display:flex;justify-content:center;align-items:center;gap:22px}
+.commandes button{border:0;border-radius:50%;background:rgba(255,255,255,.1);color:var(--cadran-texte);width:64px;height:64px;display:grid;place-items:center}
+.commandes button:active{background:rgba(255,255,255,.22)}
+.commandes .lecture{width:84px;height:84px;background:var(--cadran-or);color:#0E2A33}
+.commandes svg{width:28px;height:28px;fill:currentColor}
+.commandes .lecture svg{width:34px;height:34px}
+.message{min-height:22px;margin:12px 0 0;font-size:14px;color:var(--cadran-or)}
+
+/* Playlists */
+.rail{display:flex;gap:8px;overflow-x:auto;padding:2px 4px 8px;scrollbar-width:none}
+.rail::-webkit-scrollbar{display:none}
+.puce{flex:none;border:1.5px solid var(--trait);background:transparent;border-radius:999px;padding:9px 16px;font-weight:600;white-space:nowrap}
+.puce[aria-pressed="true"]{background:var(--encre);border-color:var(--encre);color:var(--fond)}
+.puce.nouvelle{border-style:dashed;color:var(--encre-2)}
+.outils{display:flex;gap:16px;margin:2px 6px 10px;font-size:14px}
+.lien{border:0;background:none;padding:6px 0;color:var(--celadon);font-weight:600}
+.lien.danger{color:var(--danger)}
+
+.boucles{list-style:none;margin:0;padding:0;background:var(--surface);border-radius:20px;overflow:hidden}
+.boucles li{display:flex;align-items:stretch;border-top:1px solid var(--trait)}
+.boucles li:first-child{border-top:0}
+.boucle-jouer{flex:1;min-width:0;border:0;background:none;text-align:left;padding:13px 6px 13px 16px;display:flex;gap:12px;align-items:center}
+.rang{flex:none;width:28px;height:28px;border-radius:50%;border:1.5px solid var(--trait);display:grid;place-items:center;font-size:13px;font-weight:700;color:var(--encre-2)}
+.en-cours .rang{background:var(--or);border-color:var(--or);color:var(--surface)}
+.boucle-titre{font-weight:600;display:block}
+.boucle-desc{font-size:13.5px;color:var(--encre-2);display:block}
+.boucle-actions{display:flex;align-items:center;padding-right:6px}
+.boucle-actions button{border:0;background:none;width:36px;height:44px;color:var(--encre-2);font-size:16px}
+.boucle-actions button:disabled{opacity:.25}
+.vide{padding:22px 18px;color:var(--encre-2);background:var(--surface);border-radius:20px}
+.ajouter{width:100%;margin-top:10px;border:0;border-radius:16px;padding:15px;font-weight:700;background:var(--encre);color:var(--fond)}
+
+.reglages{background:var(--surface);border-radius:20px;padding:6px 16px}
+.champ{display:flex;justify-content:space-between;align-items:center;gap:14px;padding:11px 0;border-top:1px solid var(--trait)}
+.champ:first-child{border-top:0}
+.champ label{font-weight:500}
+.champ select,.champ input[type=number]{border:1.5px solid var(--trait);background:var(--fond);border-radius:10px;padding:8px 10px;max-width:58%}
+.champ input[type=number]{width:84px}
+.volant{background:var(--surface);border-radius:20px;padding:6px 16px;margin:0}
+.volant div{display:flex;gap:14px;padding:11px 0;border-top:1px solid var(--trait)}
+.volant div:first-child{border-top:0}
+.volant dt{flex:none;width:92px;font-weight:700}
+.volant dd{margin:0;color:var(--encre-2)}
+.note{font-size:14px;color:var(--encre-2);margin:10px 6px}
+
+dialog{border:0;border-radius:24px;padding:0;width:min(94vw,480px);max-height:88vh;background:var(--surface);color:var(--encre)}
+dialog::backdrop{background:rgba(5,20,25,.6)}
+.fiche{padding:18px 18px 16px}
+.fiche h3{margin:0 0 6px;font-size:19px}
+.fiche .champ.colonne{flex-direction:column;align-items:stretch}
+.fiche .champ.colonne select,.fiche textarea{max-width:none;width:100%}
+.fiche textarea{min-height:170px;border:1.5px solid var(--trait);border-radius:12px;background:var(--fond);padding:10px;font-size:13px}
+.duo{display:flex;gap:10px;align-items:center}
+.coche{display:flex;gap:10px;align-items:center;font-weight:500}
+.coche input{width:20px;height:20px;accent-color:var(--celadon)}
+.pied{display:flex;gap:10px;margin-top:14px}
+.pied button{flex:1;border-radius:14px;padding:13px;font-weight:700;border:1.5px solid var(--trait);background:none}
+.pied .principal{background:var(--encre);border-color:var(--encre);color:var(--fond)}
+[hidden]{display:none!important}
+@media (prefers-reduced-motion:reduce){.anneau .avance{transition:none}}
+</style>
+</head>
+<body>
+<main>
+  <h1>Hifz au volant</h1>
+
+  <section class="cadran" aria-label="Lecteur">
+    <div class="cadran-haut"><span id="p-playlist"></span><b id="p-rang"></b></div>
+    <div class="anneau" id="anneau">
+      <svg viewBox="0 0 100 100" aria-hidden="true">
+        <circle class="piste" cx="50" cy="50" r="46"/>
+        <circle class="avance" id="p-arc" cx="50" cy="50" r="46" stroke-dasharray="289.03" stroke-dashoffset="289.03"/>
+      </svg>
+      <div class="anneau-centre">
+        <div class="nom-ar" id="p-ar" lang="ar"></div>
+        <div class="verset" id="p-verset"></div>
+      </div>
+    </div>
+    <p class="detail"><b id="p-titre"></b><span id="p-rep"></span></p>
+    <div class="commandes">
+      <button id="b-prec" aria-label="Boucle précédente"><svg viewBox="0 0 24 24"><path d="M6 5h2.5v14H6zM20 5.5v13L10 12z"/></svg></button>
+      <button id="b-lecture" class="lecture" aria-label="Lire"><svg viewBox="0 0 24 24"><path id="ic-lecture" d="M7 4.5v15l13-7.5z"/></svg></button>
+      <button id="b-suiv" aria-label="Boucle suivante"><svg viewBox="0 0 24 24"><path d="M15.5 5H18v14h-2.5zM4 5.5v13L14 12z"/></svg></button>
+    </div>
+    <p class="message" id="message" role="status" aria-live="polite"></p>
+    <button class="lien" id="b-reglage" style="color:var(--cadran-or)">Créer une boucle avec les trois boutons</button>
+  </section>
+
+  <h2>Playlists</h2>
+  <div class="rail" id="rail"></div>
+  <div class="outils">
+    <button class="lien" id="b-renommer">Renommer</button>
+    <button class="lien danger" id="b-suppr-pl">Supprimer la playlist</button>
+  </div>
+  <div id="zone-boucles"></div>
+  <button class="ajouter" id="b-ajouter">Ajouter une boucle</button>
+
+  <h2>Au volant</h2>
+  <dl class="volant">
+    <div><dt>Suivant</dt><dd>Passe à la boucle suivante. Après la dernière, enchaîne sur la playlist suivante.</dd></div>
+    <div><dt>Précédent</dt><dd>Reprend la boucle au début. Deux appuis rapprochés : boucle précédente.</dd></div>
+    <div><dt>Lecture, pause</dt><dd>Mets en pause pour réciter seul, puis reprends.</dd></div>
+    <div><dt>Pause puis lecture, vite</dt><dd>Ouvre le réglage : suivant et précédent changent la valeur affichée sur l'écran de la voiture, pause valide. Le premier choix proposé est la suite de ta boucle en cours ; sinon tu choisis la sourate, les versets, les répétitions et le mode, puis la boucle démarre.</dd></div>
+  </dl>
+  <p class="note">Lance la lecture une fois sur le téléphone avant de démarrer. Ensuite tout se pilote depuis le volant, l'écran « En lecture » de CarPlay ou Siri. Garde cette page ouverte dans Safari.</p>
+
+  <h2>Réglages</h2>
+  <div class="reglages">
+    <div class="champ"><label for="r-recitateur">Récitateur</label><select id="r-recitateur"></select></div>
+    <div class="champ"><label for="r-vitesse">Vitesse</label>
+      <select id="r-vitesse"><option value="0.75">Lente (×0,75)</option><option value="0.9">Posée (×0,9)</option><option value="1">Normale</option><option value="1.15">Rapide (×1,15)</option><option value="1.3">Révision (×1,3)</option></select></div>
+    <div class="champ"><label>Mes playlists</label><button class="lien" id="b-sauvegarde">Sauvegarder ou importer</button></div>
+  </div>
+  <p class="note">Audio verset par verset fourni par <a href="https://everyayah.com" style="color:var(--celadon)">everyayah.com</a>. Une connexion de données est nécessaire en route.</p>
+</main>
+
+<audio id="au" preload="auto"></audio>
+
+<dialog id="d-boucle">
+  <form class="fiche" method="dialog" id="f-boucle">
+    <h3 id="f-titre">Nouvelle boucle</h3>
+    <div class="champ colonne"><label for="f-sourate">Sourate</label><select id="f-sourate"></select></div>
+    <div class="champ"><label for="f-de">Versets</label>
+      <span class="duo"><input type="number" id="f-de" min="1" inputmode="numeric" aria-label="Du verset"> à <input type="number" id="f-a" min="1" inputmode="numeric" aria-label="Au verset"></span></div>
+    <div class="champ" id="f-decoupe-ligne"><label class="coche"><input type="checkbox" id="f-decoupe"> Découper en boucles de</label>
+      <span class="duo"><input type="number" id="f-taille" min="1" max="20" value="3" inputmode="numeric" aria-label="Versets par boucle"> versets</span></div>
+    <div class="champ"><label for="f-rep">Répéter chaque verset</label>
+      <select id="f-rep"><option value="1">1 fois</option><option value="2">2 fois</option><option value="3">3 fois</option><option value="5">5 fois</option><option value="7">7 fois</option><option value="10">10 fois</option><option value="15">15 fois</option><option value="20">20 fois</option></select></div>
+    <div class="champ colonne"><label for="f-mode">Enchaînement</label>
+      <select id="f-mode"><option value="simple">Verset après verset</option><option value="cumul">Progressif : 1, puis 2, puis 1-2, puis 3, puis 1-2-3…</option></select></div>
+    <div class="champ"><label for="f-passages">Passages</label>
+      <select id="f-passages"><option value="0">En continu, jusqu'à « suivant »</option><option value="1">1, puis boucle suivante</option><option value="2">2, puis boucle suivante</option><option value="3">3, puis boucle suivante</option><option value="5">5, puis boucle suivante</option><option value="10">10, puis boucle suivante</option></select></div>
+    <div class="champ"><label for="f-pause">Silence pour réciter</label>
+      <select id="f-pause"><option value="0">Aucun</option><option value="1">Durée du verset</option><option value="1.5">Durée × 1,5</option><option value="2">Durée × 2</option></select></div>
+    <div class="pied"><button type="button" id="f-annuler">Annuler</button><button type="submit" class="principal" id="f-valider">Ajouter la boucle</button></div>
+  </form>
+</dialog>
+
+<dialog id="d-sauvegarde">
+  <div class="fiche">
+    <h3>Sauvegarder ou importer</h3>
+    <p class="note" style="margin:0 0 10px">Copie ce texte pour garder tes playlists, ou colle une sauvegarde puis importe-la.</p>
+    <textarea id="s-texte" spellcheck="false" aria-label="Données des playlists"></textarea>
+    <div class="pied"><button type="button" id="s-fermer">Fermer</button><button type="button" id="s-copier">Copier</button><button type="button" class="principal" id="s-importer">Importer</button></div>
+  </div>
+</dialog>
+
+<script>
+"use strict";
+const SURAHS = "Al-Fatiha|الفاتحة|7;Al-Baqara|البقرة|286;Al-Imran|آل عمران|200;An-Nisa|النساء|176;Al-Ma'ida|المائدة|120;Al-An'am|الأنعام|165;Al-A'raf|الأعراف|206;Al-Anfal|الأنفال|75;At-Tawba|التوبة|129;Yunus|يونس|109;Hud|هود|123;Yusuf|يوسف|111;Ar-Ra'd|الرعد|43;Ibrahim|إبراهيم|52;Al-Hijr|الحجر|99;An-Nahl|النحل|128;Al-Isra|الإسراء|111;Al-Kahf|الكهف|110;Maryam|مريم|98;Ta-Ha|طه|135;Al-Anbiya|الأنبياء|112;Al-Hajj|الحج|78;Al-Mu'minun|المؤمنون|118;An-Nur|النور|64;Al-Furqan|الفرقان|77;Ash-Shu'ara|الشعراء|227;An-Naml|النمل|93;Al-Qasas|القصص|88;Al-Ankabut|العنكبوت|69;Ar-Rum|الروم|60;Luqman|لقمان|34;As-Sajda|السجدة|30;Al-Ahzab|الأحزاب|73;Saba|سبأ|54;Fatir|فاطر|45;Ya-Sin|يس|83;As-Saffat|الصافات|182;Sad|ص|88;Az-Zumar|الزمر|75;Ghafir|غافر|85;Fussilat|فصلت|54;Ash-Shura|الشورى|53;Az-Zukhruf|الزخرف|89;Ad-Dukhan|الدخان|59;Al-Jathiya|الجاثية|37;Al-Ahqaf|الأحقاف|35;Muhammad|محمد|38;Al-Fath|الفتح|29;Al-Hujurat|الحجرات|18;Qaf|ق|45;Adh-Dhariyat|الذاريات|60;At-Tur|الطور|49;An-Najm|النجم|62;Al-Qamar|القمر|55;Ar-Rahman|الرحمن|78;Al-Waqi'a|الواقعة|96;Al-Hadid|الحديد|29;Al-Mujadila|المجادلة|22;Al-Hashr|الحشر|24;Al-Mumtahana|الممتحنة|13;As-Saff|الصف|14;Al-Jumu'a|الجمعة|11;Al-Munafiqun|المنافقون|11;At-Taghabun|التغابن|18;At-Talaq|الطلاق|12;At-Tahrim|التحريم|12;Al-Mulk|الملك|30;Al-Qalam|القلم|52;Al-Haqqa|الحاقة|52;Al-Ma'arij|المعارج|44;Nuh|نوح|28;Al-Jinn|الجن|28;Al-Muzzammil|المزمل|20;Al-Muddaththir|المدثر|56;Al-Qiyama|القيامة|40;Al-Insan|الإنسان|31;Al-Mursalat|المرسلات|50;An-Naba|النبأ|40;An-Nazi'at|النازعات|46;Abasa|عبس|42;At-Takwir|التكوير|29;Al-Infitar|الانفطار|19;Al-Mutaffifin|المطففين|36;Al-Inshiqaq|الانشقاق|25;Al-Buruj|البروج|22;At-Tariq|الطارق|17;Al-A'la|الأعلى|19;Al-Ghashiya|الغاشية|26;Al-Fajr|الفجر|30;Al-Balad|البلد|20;Ash-Shams|الشمس|15;Al-Layl|الليل|21;Ad-Duha|الضحى|11;Ash-Sharh|الشرح|8;At-Tin|التين|8;Al-Alaq|العلق|19;Al-Qadr|القدر|5;Al-Bayyina|البينة|8;Az-Zalzala|الزلزلة|8;Al-Adiyat|العاديات|11;Al-Qari'a|القارعة|11;At-Takathur|التكاثر|8;Al-Asr|العصر|3;Al-Humaza|الهمزة|9;Al-Fil|الفيل|5;Quraysh|قريش|4;Al-Ma'un|الماعون|7;Al-Kawthar|الكوثر|3;Al-Kafirun|الكافرون|6;An-Nasr|النصر|3;Al-Masad|المسد|5;Al-Ikhlas|الإخلاص|4;Al-Falaq|الفلق|5;An-Nas|الناس|6"
+  .split(";").map(x => { const [n, a, c] = x.split("|"); return { n, a, c: +c }; });
+
+const RECITATEURS = [
+  ["Husary_128kbps", "Al-Husary (murattal)"],
+  ["Husary_Muallim_128kbps", "Al-Husary (mouallim, lent)"],
+  ["Minshawy_Murattal_128kbps", "Al-Minshawi (murattal)"],
+  ["Alafasy_128kbps", "Mishary Al-Afasy"],
+  ["Abdul_Basit_Murattal_192kbps", "Abdul Basit (murattal)"],
+  ["Abdurrahmaan_As-Sudais_192kbps", "As-Sudais"],
+  ["MaherAlMuaiqly128kbps", "Maher Al-Muaiqly"],
+  ["Hudhaify_128kbps", "Al-Hudhaify"]
+];
+const CLE = "hifz-volant-v1";
+const $ = id => document.getElementById(id);
+const uid = () => Math.random().toString(36).slice(2, 9);
+const pad3 = n => String(n).padStart(3, "0");
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+
+/* ---------- État ---------- */
+function etatParDefaut() {
+  const b = (s, a) => ({ id: uid(), s, de: 1, a, rep: 3, mode: "simple", passages: 0, pause: 0 });
+  const pl = { id: uid(), nom: "Pour commencer", boucles: [b(114, 6), b(113, 5), b(112, 4)] };
+  return { recitateur: "Husary_128kbps", vitesse: 1, playlists: [pl], vue: pl.id, cur: { plId: pl.id, bId: pl.boucles[0].id } };
+}
+function nettoyer(e) {
+  if (!e || !Array.isArray(e.playlists)) return null;
+  e.playlists = e.playlists.filter(p => p && Array.isArray(p.boucles)).map(p => ({
+    id: p.id || uid(), nom: String(p.nom || "Playlist").slice(0, 40),
+    boucles: p.boucles.filter(b => b && b.s >= 1 && b.s <= 114).map(b => {
+      const max = SURAHS[b.s - 1].c;
+      let de = Math.min(max, Math.max(1, b.de | 0 || 1)), a = Math.min(max, Math.max(1, b.a | 0 || max));
+      if (de > a) [de, a] = [a, de];
+      return { id: b.id || uid(), s: b.s | 0, de, a, rep: Math.min(30, Math.max(1, b.rep | 0 || 1)), mode: b.mode === "cumul" ? "cumul" : "simple", passages: Math.max(0, b.passages | 0), pause: [0, 1, 1.5, 2].includes(+b.pause) ? +b.pause : 0 };
+    })
+  }));
+  if (!e.playlists.length) e.playlists = [{ id: uid(), nom: "Ma playlist", boucles: [] }];
+  if (!RECITATEURS.some(r => r[0] === e.recitateur)) e.recitateur = RECITATEURS[0][0];
+  e.vitesse = +e.vitesse || 1;
+  if (!e.playlists.some(p => p.id === e.vue)) e.vue = e.playlists[0].id;
+  if (!e.cur) e.cur = { plId: null, bId: null };
+  return e;
+}
+let etat;
+try { etat = nettoyer(JSON.parse(localStorage.getItem(CLE))); } catch (_) { etat = null; }
+if (!etat) etat = etatParDefaut();
+function enregistrer() { try { localStorage.setItem(CLE, JSON.stringify(etat)); } catch (_) {} }
+
+const playlistVue = () => etat.playlists.find(p => p.id === etat.vue) || etat.playlists[0];
+function courant() {
+  for (const pl of etat.playlists) { const i = pl.boucles.findIndex(b => b.id === etat.cur.bId); if (i >= 0) return { pl, b: pl.boucles[i], i }; }
+  return null;
+}
+const aPlat = () => etat.playlists.flatMap(p => p.boucles.map(b => [p.id, b.id]));
+
+/* ---------- Séquence d'une boucle ---------- */
+function construireSequence(b) {
+  const vs = []; for (let v = b.de; v <= b.a; v++) vs.push(v);
+  const seq = [];
+  vs.forEach((v, i) => {
+    for (let r = 1; r <= b.rep; r++) seq.push({ v, r, sur: b.rep });
+    if (b.mode === "cumul" && i > 0) for (let r = 1; r <= b.rep; r++) vs.slice(0, i + 1).forEach(u => seq.push({ v: u, r, sur: b.rep, chaine: v }));
+  });
+  return seq;
+}
+function decrire(b) {
+  const t = [b.rep > 1 ? "chaque verset ×" + b.rep : "lecture suivie"];
+  if (b.mode === "cumul") t.push("enchaînement progressif");
+  t.push(b.passages ? b.passages + (b.passages > 1 ? " passages" : " passage") : "en continu");
+  if (b.pause) t.push("silence pour réciter");
+  return t.join(", ");
+}
+const titreBoucle = b => SURAHS[b.s - 1].n + (b.de === b.a ? " " + b.de : " " + b.de + " à " + b.a);
+
+/* ---------- Moteur audio ---------- */
+const au = $("au");
+let seq = [], idx = 0, passage = 1, phase = "verset", debutBoucle = 0, erreurs = 0, veutLire = false, urlCourante = "", urlSilence = null;
+const cacheBlob = new Map(), enVol = new Set(); let corsOk = null;
+
+const urlVerset = (s, v) => "https://everyayah.com/data/" + etat.recitateur + "/" + pad3(s) + pad3(v) + ".mp3";
+
+function silenceWav(secs) {
+  const hz = 8000, n = Math.floor(hz * secs), buf = new ArrayBuffer(44 + n * 2), d = new DataView(buf);
+  const w = (o, s) => { for (let i = 0; i < s.length; i++) d.setUint8(o + i, s.charCodeAt(i)); };
+  w(0, "RIFF"); d.setUint32(4, 36 + n * 2, true); w(8, "WAVE"); w(12, "fmt "); d.setUint32(16, 16, true);
+  d.setUint16(20, 1, true); d.setUint16(22, 1, true); d.setUint32(24, hz, true); d.setUint32(28, hz * 2, true);
+  d.setUint16(32, 2, true); d.setUint16(34, 16, true); w(36, "data"); d.setUint32(40, n * 2, true);
+  return new Blob([buf], { type: "audio/wav" });
+}
+
+async function precharger(url) {
+  if (corsOk === false || cacheBlob.has(url) || enVol.has(url) || typeof fetch !== "function") return;
+  enVol.add(url);
+  try {
+    const r = await fetch(url, { mode: "cors" }); if (!r.ok) throw 0;
+    cacheBlob.set(url, URL.createObjectURL(await r.blob())); corsOk = true;
+    while (cacheBlob.size > 80) {
+      const [k, u] = cacheBlob.entries().next().value;
+      if (au.src === u) break; cacheBlob.delete(k); URL.revokeObjectURL(u);
+    }
+  } catch (_) { if (corsOk === null && navigator.onLine !== false) corsOk = false; }
+  finally { enVol.delete(url); }
+}
+function prechargerAutour() {
+  const c = courant(); if (!c) return;
+  const vus = new Set();
+  for (let k = 1; k <= seq.length && vus.size < 12; k++) vus.add(seq[(idx + k) % seq.length].v);
+  vus.forEach(v => precharger(urlVerset(c.b.s, v)));
+  const f = aPlat(), i = f.findIndex(x => x[1] === c.b.id), suiv = f[(i + 1) % f.length];
+  if (suiv && suiv[1] !== c.b.id) { const nb = etat.playlists.find(p => p.id === suiv[0]).boucles.find(b => b.id === suiv[1]); precharger(urlVerset(nb.s, nb.de)); }
+}
+function viderCache() { cacheBlob.forEach(u => URL.revokeObjectURL(u)); cacheBlob.clear(); }
+
+function lire() {
+  veutLire = true;
+  const p = au.play();
+  if (p && p.catch) p.catch(e => { if (e && e.name === "NotAllowedError") { veutLire = false; dire("Touche le bouton de lecture une fois sur le téléphone pour démarrer."); majLecteur(); } });
+}
+function chargerEtape(auto) {
+  const c = courant(); if (!c || !seq.length) { majLecteur(); return; }
+  phase = "verset";
+  urlCourante = urlVerset(c.b.s, seq[idx].v);
+  au.src = cacheBlob.get(urlCourante) || urlCourante;
+  au.defaultPlaybackRate = etat.vitesse; au.playbackRate = etat.vitesse;
+  if (auto) lire();
+  majMeta(); majLecteur(); prechargerAutour();
+}
+function choisirBoucle(plId, bId, auto) {
+  etat.cur = { plId, bId }; enregistrer();
+  const c = courant(); seq = c ? construireSequence(c.b) : [];
+  idx = 0; passage = 1; debutBoucle = Date.now(); erreurs = 0; dire("");
+  chargerEtape(auto); majPlaylists(); majBoucles();
+}
+function avancer() {
+  const c = courant(); if (!c) return;
+  idx++;
+  if (idx >= seq.length) {
+    idx = 0;
+    if (c.b.passages > 0 && passage >= c.b.passages) { deplacer(1, true); return; }
+    passage++;
+  }
+  chargerEtape(true);
+}
+function deplacer(sens, auto) {
+  if (reg) { tourner(sens); return; }
+  const f = aPlat(); if (!f.length) return;
+  let i = f.findIndex(x => x[1] === etat.cur.bId);
+  i = i < 0 ? 0 : (i + sens + f.length) % f.length;
+  etat.vue = f[i][0]; choisirBoucle(f[i][0], f[i][1], auto);
+}
+function precedent() {
+  if (reg) { tourner(-1); return; }
+  const c = courant(); if (!c) return;
+  if (Date.now() - debutBoucle > 4000) choisirBoucle(c.pl.id, c.b.id, true); else deplacer(-1, true);
+}
+function basculer() {
+  if (reg) { valider(); return; }
+  if (!courant()) { const f = aPlat(); if (!f.length) { dire("Ajoute d'abord une boucle."); return; } choisirBoucle(f[0][0], f[0][1], true); return; }
+  if (!au.src) { chargerEtape(true); return; }
+  if (au.paused) lire(); else { veutLire = false; au.pause(); }
+}
+
+au.addEventListener("ended", () => {
+  if (reg) return;
+  erreurs = 0;
+  const c = courant(); if (!c) return;
+  if (phase === "verset" && c.b.pause > 0) {
+    const d = isFinite(au.duration) && au.duration > 0 ? au.duration : au.currentTime;
+    const secs = Math.min(120, Math.max(1, d / etat.vitesse * c.b.pause));
+    phase = "silence";
+    if (urlSilence) URL.revokeObjectURL(urlSilence);
+    urlSilence = URL.createObjectURL(silenceWav(secs));
+    au.src = urlSilence; au.defaultPlaybackRate = 1; au.playbackRate = 1;
+    lire(); majMeta(); majLecteur(); return;
+  }
+  avancer();
+});
+au.addEventListener("error", () => {
+  if (!au.getAttribute("src") || reg) return;
+  if (phase === "silence") { avancer(); return; }
+  if (String(au.src).startsWith("blob:") && urlCourante) { const u = cacheBlob.get(urlCourante); cacheBlob.delete(urlCourante); if (u) URL.revokeObjectURL(u); au.src = urlCourante; if (veutLire) lire(); return; }
+  if (++erreurs >= 3) { veutLire = false; dire("Lecture impossible. Vérifie le réseau ou change de récitateur."); majLecteur(); return; }
+  if (veutLire) avancer();
+});
+["play", "pause"].forEach(ev => au.addEventListener(ev, () => {
+  if ("mediaSession" in navigator) navigator.mediaSession.playbackState = au.paused ? "paused" : "playing";
+  majLecteur();
+}));
+au.addEventListener("timeupdate", majArc);
+
+/* ---------- Boutons du volant, CarPlay, écran verrouillé ---------- */
+let pochette = null;
+function creerPochette() {
+  try {
+    const c = document.createElement("canvas"); c.width = c.height = 512; const x = c.getContext("2d");
+    x.fillStyle = "#0E2A33"; x.fillRect(0, 0, 512, 512);
+    x.strokeStyle = "#D9B45B"; x.lineWidth = 14; x.beginPath(); x.arc(256, 256, 190, 0, Math.PI * 2); x.stroke();
+    x.fillStyle = "#EAF2F0"; x.textAlign = "center"; x.textBaseline = "middle"; x.font = "bold 150px Amiri, 'Geeza Pro', serif"; x.fillText("حفظ", 256, 250);
+    pochette = [{ src: c.toDataURL("image/png"), sizes: "512x512", type: "image/png" }];
+  } catch (_) { pochette = []; }
+}
+function majMeta() {
+  if (reg) return;
+  if (!("mediaSession" in navigator) || typeof MediaMetadata === "undefined") return;
+  const c = courant(); if (!c || !seq.length) return;
+  if (pochette === null) creerPochette();
+  const e = seq[idx], S = SURAHS[c.b.s - 1];
+  const title = phase === "silence" ? "À toi : " + S.n + " " + e.v : S.n + " " + e.v + (e.sur > 1 ? " (" + e.r + "/" + e.sur + ")" : "");
+  try {
+    navigator.mediaSession.metadata = new MediaMetadata({ title, artist: "Boucle " + (c.i + 1) + "/" + c.pl.boucles.length + ", versets " + c.b.de + " à " + c.b.a, album: c.pl.nom, artwork: pochette });
+  } catch (_) {}
+}
+if ("mediaSession" in navigator) {
+  const poser = (a, f) => { try { navigator.mediaSession.setActionHandler(a, f); } catch (_) {} };
+  poser("play", () => { if (reg) valider(); else if (Date.now() - instantPause < 1500) entrerReglage(); else lire(); });
+  poser("pause", () => { if (reg) { valider(); return; } veutLire = false; au.pause(); instantPause = Date.now(); });
+  poser("nexttrack", () => deplacer(1, true));
+  poser("previoustrack", () => precedent());
+}
+
+/* ---------- Affichage ---------- */
+function dire(t) { $("message").textContent = t; }
+const TOUR = 289.03;
+function majArc() {
+  if (reg) { $("p-arc").style.strokeDashoffset = TOUR * (1 - (reg.k + 1) / reg.items.length); return; }
+  if (!seq.length) { $("p-arc").style.strokeDashoffset = TOUR; return; }
+  const part = phase === "verset" && isFinite(au.duration) && au.duration > 0 ? au.currentTime / au.duration : (phase === "silence" ? 1 : 0);
+  $("p-arc").style.strokeDashoffset = TOUR * (1 - Math.min(1, (idx + part) / seq.length));
+}
+function majLecteur() {
+  if (reg) { afficherReglage(); return; }
+  const c = courant();
+  $("ic-lecture").setAttribute("d", au.paused ? "M7 4.5v15l13-7.5z" : "M6.5 5h4v14h-4zM13.5 5h4v14h-4z");
+  $("b-lecture").setAttribute("aria-label", au.paused ? "Lire" : "Mettre en pause");
+  if (!c || !seq.length) {
+    $("p-playlist").textContent = ""; $("p-rang").textContent = ""; $("p-ar").textContent = "حفظ"; $("p-verset").textContent = "";
+    $("p-titre").textContent = "Aucune boucle sélectionnée"; $("p-rep").textContent = "Ajoute une boucle, puis touche-la pour l'écouter."; majArc(); return;
+  }
+  const e = seq[idx], S = SURAHS[c.b.s - 1];
+  $("anneau").classList.toggle("a-toi", phase === "silence");
+  $("p-playlist").textContent = c.pl.nom;
+  $("p-rang").textContent = "Boucle " + (c.i + 1) + " sur " + c.pl.boucles.length;
+  $("p-ar").textContent = S.a;
+  $("p-verset").textContent = phase === "silence" ? "À toi" : "Verset " + e.v;
+  $("p-titre").textContent = titreBoucle(c.b);
+  const r = [];
+  if (e.chaine) r.push("enchaînement jusqu'au verset " + e.chaine);
+  if (e.sur > 1) r.push("répétition " + e.r + " sur " + e.sur);
+  r.push(c.b.passages ? "passage " + passage + " sur " + c.b.passages : "passage " + passage);
+  $("p-rep").textContent = r.join(", ");
+  majArc();
+}
+function majPlaylists() {
+  $("rail").innerHTML = etat.playlists.map(p =>
+    '<button class="puce" data-pl="' + p.id + '" aria-pressed="' + (p.id === etat.vue) + '">' + esc(p.nom) + "</button>").join("") +
+    '<button class="puce nouvelle" data-pl="+">Nouvelle playlist</button>';
+}
+function majBoucles() {
+  const pl = playlistVue(), z = $("zone-boucles");
+  if (!pl.boucles.length) { z.innerHTML = '<p class="vide">Cette playlist est vide. Ajoute une boucle : une sourate entière, quelques versets, ou une sourate découpée en petites boucles.</p>'; return; }
+  z.innerHTML = '<ol class="boucles">' + pl.boucles.map((b, i) =>
+    '<li class="' + (b.id === etat.cur.bId ? "en-cours" : "") + '">' +
+    '<button class="boucle-jouer" data-act="jouer" data-id="' + b.id + '"><span class="rang">' + (i + 1) + '</span><span><span class="boucle-titre">' + esc(titreBoucle(b)) + '</span><span class="boucle-desc">' + esc(decrire(b)) + "</span></span></button>" +
+    '<span class="boucle-actions">' +
+    '<button data-act="monter" data-id="' + b.id + '" aria-label="Monter"' + (i === 0 ? " disabled" : "") + ">▲</button>" +
+    '<button data-act="descendre" data-id="' + b.id + '" aria-label="Descendre"' + (i === pl.boucles.length - 1 ? " disabled" : "") + ">▼</button>" +
+    '<button data-act="modifier" data-id="' + b.id + '" aria-label="Modifier">✎</button>' +
+    '<button data-act="supprimer" data-id="' + b.id + '" aria-label="Supprimer">✕</button></span></li>').join("") + "</ol>";
+}
+function majTout() { majPlaylists(); majBoucles(); majLecteur(); }
+
+/* Après une modification des boucles : garder la lecture cohérente */
+function apresModif(idModifie) {
+  enregistrer();
+  const c = courant();
+  if (!c) { au.pause(); veutLire = false; seq = []; const f = aPlat(); if (f.length) choisirBoucle(f[0][0], f[0][1], false); }
+  else if (idModifie === c.b.id) { const jouait = !au.paused; choisirBoucle(c.pl.id, c.b.id, jouait); }
+  majTout(); majMeta();
+}
+
+/* ---------- Interactions ---------- */
+$("b-lecture").onclick = basculer;
+$("b-suiv").onclick = () => deplacer(1, true);
+$("b-prec").onclick = precedent;
+
+$("rail").onclick = ev => {
+  const b = ev.target.closest("[data-pl]"); if (!b) return;
+  if (b.dataset.pl === "+") {
+    const nom = (prompt("Nom de la playlist", "") || "").trim(); if (!nom) return;
+    const pl = { id: uid(), nom: nom.slice(0, 40), boucles: [] }; etat.playlists.push(pl); etat.vue = pl.id;
+  } else etat.vue = b.dataset.pl;
+  enregistrer(); majPlaylists(); majBoucles();
+};
+$("b-renommer").onclick = () => {
+  const pl = playlistVue(), nom = (prompt("Nouveau nom", pl.nom) || "").trim(); if (!nom) return;
+  pl.nom = nom.slice(0, 40); enregistrer(); majTout(); majMeta();
+};
+$("b-suppr-pl").onclick = () => {
+  const pl = playlistVue();
+  if (!confirm("Supprimer la playlist « " + pl.nom + " » et ses " + pl.boucles.length + " boucles ?")) return;
+  etat.playlists = etat.playlists.filter(p => p.id !== pl.id);
+  if (!etat.playlists.length) etat.playlists.push({ id: uid(), nom: "Ma playlist", boucles: [] });
+  etat.vue = etat.playlists[0].id; apresModif(null);
+};
+$("zone-boucles").onclick = ev => {
+  const el = ev.target.closest("[data-act]"); if (!el) return;
+  const pl = playlistVue(), i = pl.boucles.findIndex(b => b.id === el.dataset.id); if (i < 0) return;
+  const act = el.dataset.act;
+  if (act === "jouer") choisirBoucle(pl.id, pl.boucles[i].id, true);
+  else if (act === "monter" && i > 0) { [pl.boucles[i - 1], pl.boucles[i]] = [pl.boucles[i], pl.boucles[i - 1]]; apresModif(null); }
+  else if (act === "descendre" && i < pl.boucles.length - 1) { [pl.boucles[i + 1], pl.boucles[i]] = [pl.boucles[i], pl.boucles[i + 1]]; apresModif(null); }
+  else if (act === "modifier") ouvrirFiche(pl.boucles[i]);
+  else if (act === "supprimer") { if (confirm("Supprimer la boucle « " + titreBoucle(pl.boucles[i]) + " » ?")) { pl.boucles.splice(i, 1); apresModif(null); } }
+};
+
+/* Fiche d'une boucle */
+let enEdition = null;
+$("f-sourate").innerHTML = SURAHS.map((s, i) => '<option value="' + (i + 1) + '">' + (i + 1) + ". " + esc(s.n) + " (" + s.c + " versets)</option>").join("");
+function bornerVersets(reinit) {
+  const max = SURAHS[$("f-sourate").value - 1].c;
+  $("f-de").max = $("f-a").max = max;
+  if (reinit) { $("f-de").value = 1; $("f-a").value = max; }
+}
+$("f-sourate").onchange = () => bornerVersets(true);
+function ouvrirFiche(b) {
+  enEdition = b || null;
+  $("f-titre").textContent = b ? "Modifier la boucle" : "Nouvelle boucle";
+  $("f-valider").textContent = b ? "Enregistrer" : "Ajouter la boucle";
+  $("f-decoupe-ligne").hidden = !!b; $("f-decoupe").checked = false;
+  const dern = playlistVue().boucles.slice(-1)[0];
+  const m = b || { s: dern ? dern.s : 78, rep: dern ? dern.rep : 3, mode: dern ? dern.mode : "simple", passages: dern ? dern.passages : 0, pause: dern ? dern.pause : 0 };
+  $("f-sourate").value = m.s; bornerVersets(!b);
+  if (b) { $("f-de").value = b.de; $("f-a").value = b.a; }
+  if (![...$("f-rep").options].some(o => +o.value === m.rep)) $("f-rep").add(new Option(m.rep + " fois", m.rep));
+  $("f-rep").value = m.rep;
+  $("f-mode").value = m.mode; $("f-passages").value = [0, 1, 2, 3, 5, 10].includes(m.passages) ? m.passages : 0; $("f-pause").value = m.pause;
+  $("d-boucle").showModal();
+}
+$("b-ajouter").onclick = () => ouvrirFiche(null);
+$("f-annuler").onclick = () => $("d-boucle").close();
+$("f-boucle").onsubmit = ev => {
+  ev.preventDefault();
+  const s = +$("f-sourate").value, max = SURAHS[s - 1].c;
+  let de = Math.min(max, Math.max(1, +$("f-de").value || 1)), a = Math.min(max, Math.max(1, +$("f-a").value || max));
+  if (de > a) [de, a] = [a, de];
+  const base = { s, rep: +$("f-rep").value, mode: $("f-mode").value, passages: +$("f-passages").value, pause: +$("f-pause").value };
+  const pl = playlistVue();
+  if (enEdition) { Object.assign(enEdition, base, { de, a }); $("d-boucle").close(); apresModif(enEdition.id); return; }
+  if ($("f-decoupe").checked) {
+    const t = Math.min(20, Math.max(1, +$("f-taille").value || 3));
+    for (let v = de; v <= a; v += t) pl.boucles.push(Object.assign({ id: uid(), de: v, a: Math.min(a, v + t - 1) }, base));
+  } else pl.boucles.push(Object.assign({ id: uid(), de, a }, base));
+  $("d-boucle").close();
+  if (!courant()) { const n = pl.boucles[pl.boucles.length - 1]; etat.cur = { plId: pl.id, bId: n.id }; }
+  apresModif(etat.cur.bId && seq.length === 0 ? etat.cur.bId : null);
+};
+
+/* Réglages */
+$("r-recitateur").innerHTML = RECITATEURS.map(r => '<option value="' + r[0] + '">' + esc(r[1]) + "</option>").join("");
+$("r-recitateur").value = etat.recitateur;
+$("r-recitateur").onchange = ev => { etat.recitateur = ev.target.value; enregistrer(); viderCache(); corsOk = corsOk === false ? false : null; const jouait = !au.paused; if (courant()) chargerEtape(jouait); };
+$("r-vitesse").value = String(etat.vitesse); if (!$("r-vitesse").value) $("r-vitesse").value = "1";
+$("r-vitesse").onchange = ev => { etat.vitesse = +ev.target.value; enregistrer(); if (phase === "verset") { au.defaultPlaybackRate = etat.vitesse; au.playbackRate = etat.vitesse; } };
+
+/* Sauvegarde */
+$("b-sauvegarde").onclick = () => { $("s-texte").value = JSON.stringify({ recitateur: etat.recitateur, vitesse: etat.vitesse, playlists: etat.playlists }); $("d-sauvegarde").showModal(); };
+$("s-fermer").onclick = () => $("d-sauvegarde").close();
+$("s-copier").onclick = async () => {
+  const t = $("s-texte"); t.select();
+  try { await navigator.clipboard.writeText(t.value); $("s-copier").textContent = "Copié"; } catch (_) { try { document.execCommand("copy"); $("s-copier").textContent = "Copié"; } catch (__) {} }
+  setTimeout(() => { $("s-copier").textContent = "Copier"; }, 1500);
+};
+$("s-importer").onclick = () => {
+  let n = null; try { n = nettoyer(JSON.parse($("s-texte").value)); } catch (_) {}
+  if (!n) { alert("Ce texte n'est pas une sauvegarde valide."); return; }
+  if (!confirm("Remplacer tes playlists actuelles par cette sauvegarde ?")) return;
+  au.pause(); veutLire = false; etat = n; seq = []; viderCache();
+  $("r-recitateur").value = etat.recitateur; $("r-vitesse").value = String(etat.vitesse);
+  $("d-sauvegarde").close(); apresModif(null);
+};
+
+/* ---------- Réglage au volant : tout créer avec suivant, précédent et pause ---------- */
+let reg = null, instantPause = 0, minuterie = null, urlBip = null;
+const MODES = [["simple", 0, "Verset après verset"], ["simple", 1, "Avec silence pour réciter"], ["cumul", 0, "Progressif"], ["cumul", 1, "Progressif avec silence"]];
+function suiteDe(min, max) { const t = []; for (let v = min; v <= max; v++) t.push(v); return t; }
+function bipWav(hz) {
+  const f = 8000, n = f * 20, buf = new ArrayBuffer(44 + n * 2), d = new DataView(buf);
+  const w = (o, s) => { for (let i = 0; i < s.length; i++) d.setUint8(o + i, s.charCodeAt(i)); };
+  w(0, "RIFF"); d.setUint32(4, 36 + n * 2, true); w(8, "WAVE"); w(12, "fmt "); d.setUint32(16, 16, true);
+  d.setUint16(20, 1, true); d.setUint16(22, 1, true); d.setUint32(24, f, true); d.setUint32(28, f * 2, true);
+  d.setUint16(32, 2, true); d.setUint16(34, 16, true); w(36, "data"); d.setUint32(40, n * 2, true);
+  const duree = Math.floor(f * 0.12);
+  for (let i = 0; i < duree; i++) d.setInt16(44 + i * 2, Math.round(Math.sin(2 * Math.PI * hz * i / f) * 9000 * Math.min(1, i / 80, (duree - i) / 80)), true);
+  return new Blob([buf], { type: "audio/wav" });
+}
+function sonReglage(hz) {
+  const ancien = urlBip; urlBip = URL.createObjectURL(bipWav(hz));
+  au.loop = true; au.src = urlBip; au.defaultPlaybackRate = 1; au.playbackRate = 1; lire();
+  if (ancien) URL.revokeObjectURL(ancien);
+  clearTimeout(minuterie); minuterie = setTimeout(quitterReglage, 45000);
+}
+function afficherReglage() {
+  const it = reg.items[reg.k];
+  $("anneau").classList.add("a-toi");
+  $("p-playlist").textContent = "Réglage"; $("p-rang").textContent = reg.entete;
+  $("p-ar").textContent = it.ar || ""; $("p-verset").textContent = it.t;
+  $("p-titre").textContent = reg.entete; $("p-rep").textContent = "Suivant ou précédent pour changer, lecture ou pause pour valider.";
+  $("ic-lecture").setAttribute("d", "M9.5 16.2 5.3 12l-1.4 1.4 5.6 5.6 11-11-1.4-1.4z"); $("b-lecture").setAttribute("aria-label", "Valider");
+  majArc();
+  if ("mediaSession" in navigator && typeof MediaMetadata !== "undefined") {
+    if (pochette === null) creerPochette();
+    try { navigator.mediaSession.metadata = new MediaMetadata({ title: it.t, artist: reg.entete + " : suivant ou précédent pour changer, pause pour valider", album: "Réglage", artwork: pochette }); navigator.mediaSession.playbackState = "playing"; } catch (_) {}
+  }
+}
+function demanderListe(entete, items, k, suite) { reg = { entete, items, k: Math.max(0, k), suite }; }
+function demander(entete, vals, etiquette, defaut, nomGroupe, suite, avecAnnuler, premiers) {
+  const enItems = l => l.map(v => Object.assign({ v }, etiquette(v)));
+  if (vals.length <= 12) return demanderListe(entete, enItems(vals), vals.indexOf(defaut), suite);
+  const g = new Map(); vals.forEach(v => { const d = Math.floor(v / 10); if (!g.has(d)) g.set(d, []); g.get(d).push(v); });
+  const groupes = [...g.values()], items = groupes.map(l => ({ v: l, t: nomGroupe + " " + l[0] + " à " + l[l.length - 1] }));
+  const avant = premiers || [], g0 = groupes.findIndex(l => l.includes(defaut));
+  if (avant.length && g0 > 0) items.push(...items.splice(0, g0));
+  if (avecAnnuler) items.push({ v: null, t: "Annuler" });
+  items.unshift(...avant);
+  demanderListe(entete, items, avant.length ? 0 : groupes.findIndex(l => l.includes(defaut)), l => !Array.isArray(l) ? suite(l) : demanderListe(entete, enItems(l), l.indexOf(defaut), suite));
+}
+function creerAuVolant(s, de, a, rep, mode, pause) {
+  let pl = etat.playlists.find(p => p.nom === "Au volant");
+  if (!pl) { pl = { id: uid(), nom: "Au volant", boucles: [] }; etat.playlists.push(pl); }
+  const b = { id: uid(), s, de, a, rep, mode, passages: 0, pause }; pl.boucles.push(b);
+  fermerReglage(); etat.vue = pl.id; choisirBoucle(pl.id, b.id, true); majTout();
+}
+function entrerReglage() {
+  const c = courant(), d = c ? c.b : { s: 78, de: 1, a: 3, rep: 3, mode: "simple", pause: 0 };
+  clearTimeout(minuterie); dire("");
+  const maxD = SURAHS[d.s - 1].c, premiers = [];
+  if (c && d.a < maxD) { const de2 = d.a + 1, a2 = Math.min(maxD, de2 + d.a - d.de); premiers.push({ v: "suite", t: "Suite : " + SURAHS[d.s - 1].n + " " + de2 + " à " + a2, ar: SURAHS[d.s - 1].a, de2, a2 }); }
+  demander("Sourate", suiteDe(1, 114), n => ({ t: n + " " + SURAHS[n - 1].n, ar: SURAHS[n - 1].a }), d.s, "Sourates", s => {
+    if (s === null) return quitterReglage();
+    if (s === "suite") return creerAuVolant(d.s, premiers[0].de2, premiers[0].a2, d.rep, d.mode, d.pause);
+    const max = SURAHS[s - 1].c, ar = SURAHS[s - 1].a, portee = d.a - d.de;
+    const deDefaut = s === d.s && d.a < max ? d.a + 1 : 1;
+    demander("Du verset", suiteDe(1, max), v => ({ t: "Du verset " + v, ar }), deDefaut, "Du verset, de", de => {
+      demander("Au verset", suiteDe(de, max), v => ({ t: "Au verset " + v, ar }), Math.min(max, de + portee), "Au verset, de", a => {
+        const reps = [...new Set([1, 2, 3, 5, 7, 10, 15, 20, d.rep])].sort((x, y) => x - y);
+        demanderListe("Répétitions", reps.map(v => ({ v, t: v + (v > 1 ? " répétitions" : " répétition"), ar })), reps.indexOf(d.rep), rep => {
+          demanderListe("Mode", MODES.map(m => ({ v: m, t: m[2], ar })), MODES.findIndex(m => m[0] === d.mode && m[1] === (d.pause ? 1 : 0)), m => {
+            creerAuVolant(s, de, a, rep, m[0], m[1]);
+          });
+        });
+      });
+    });
+  }, true, premiers);
+  afficherReglage(); sonReglage(880);
+}
+function tourner(sens) { reg.k = (reg.k + sens + reg.items.length) % reg.items.length; afficherReglage(); sonReglage(sens > 0 ? 880 : 660); }
+function valider() { const r = reg; r.suite(r.items[r.k].v); if (reg) { afficherReglage(); sonReglage(1320); } }
+function fermerReglage() { reg = null; clearTimeout(minuterie); au.loop = false; $("anneau").classList.remove("a-toi"); }
+function quitterReglage() { if (!reg) return; fermerReglage(); const c = courant(); if (c) choisirBoucle(c.pl.id, c.b.id, true); else { au.pause(); majTout(); } }
+$("b-reglage").onclick = () => { if (reg) quitterReglage(); else entrerReglage(); };
+
+/* ---------- Démarrage ---------- */
+(function demarrer() {
+  const c = courant();
+  if (c) { seq = construireSequence(c.b); etat.vue = c.pl.id; chargerEtape(false); }
+  else { const f = aPlat(); if (f.length) choisirBoucle(f[0][0], f[0][1], false); }
+  majTout();
+})();
+</script>
+</body>
+</html>
