@@ -127,9 +127,9 @@ dialog::backdrop{background:rgba(5,20,25,.6)}
     </div>
     <p class="detail"><b id="p-titre"></b><span id="p-rep"></span></p>
     <div class="commandes">
-      <button id="b-prec" aria-label="Boucle précédente"><svg viewBox="0 0 24 24"><path d="M6 5h2.5v14H6zM20 5.5v13L10 12z"/></svg></button>
+      <button id="b-prec" aria-label="Verset précédent"><svg viewBox="0 0 24 24"><path d="M6 5h2.5v14H6zM20 5.5v13L10 12z"/></svg></button>
       <button id="b-lecture" class="lecture" aria-label="Lire"><svg viewBox="0 0 24 24"><path id="ic-lecture" d="M7 4.5v15l13-7.5z"/></svg></button>
-      <button id="b-suiv" aria-label="Boucle suivante"><svg viewBox="0 0 24 24"><path d="M15.5 5H18v14h-2.5zM4 5.5v13L14 12z"/></svg></button>
+      <button id="b-suiv" aria-label="Verset suivant"><svg viewBox="0 0 24 24"><path d="M15.5 5H18v14h-2.5zM4 5.5v13L14 12z"/></svg></button>
     </div>
     <p class="message" id="message" role="status" aria-live="polite"></p>
     <button class="lien" id="b-reglage" style="color:var(--cadran-or)">Créer une boucle avec les trois boutons</button>
@@ -146,12 +146,12 @@ dialog::backdrop{background:rgba(5,20,25,.6)}
 
   <h2>Au volant</h2>
   <dl class="volant">
-    <div><dt>Suivant</dt><dd>Passe à la boucle suivante. Après la dernière, enchaîne sur la playlist suivante.</dd></div>
-    <div><dt>Précédent</dt><dd>Reprend la boucle au début. Deux appuis rapprochés : boucle précédente.</dd></div>
+    <div><dt>Suivant</dt><dd>Passe au verset suivant. Deux appuis rapprochés : boucle suivante, puis playlist suivante après la dernière.</dd></div>
+    <div><dt>Précédent</dt><dd>Reprend le verset, ou revient au verset précédent si tu es à son début. Deux appuis rapprochés : début de la boucle, ou boucle précédente si tu y étais déjà.</dd></div>
     <div><dt>Lecture, pause</dt><dd>Mets en pause pour réciter seul, puis reprends.</dd></div>
     <div><dt>Pause puis lecture, vite</dt><dd>Ouvre le réglage : suivant et précédent changent la valeur affichée sur l'écran de la voiture, pause valide. Le premier choix proposé est la suite de ta boucle en cours ; sinon tu choisis la sourate, les versets, les répétitions et le mode, puis la boucle démarre.</dd></div>
   </dl>
-  <p class="note">Lance la lecture une fois sur le téléphone avant de démarrer. Ensuite tout se pilote depuis le volant, l'écran « En lecture » de CarPlay ou Siri. Garde cette page ouverte dans Safari.</p>
+  <p class="note">Lance la lecture une fois sur le téléphone avant de démarrer. Ensuite tout se pilote depuis le volant, ou l'écran « En lecture » de CarPlay. Garde cette page ouverte dans Safari.</p>
 
   <h2>Réglages</h2>
   <div class="reglages">
@@ -346,10 +346,38 @@ function deplacer(sens, auto) {
   i = i < 0 ? 0 : (i + sens + f.length) % f.length;
   etat.vue = f[i][0]; choisirBoucle(f[i][0], f[i][1], auto);
 }
+/* Un groupe = toutes les répétitions d'un même verset, ou un même enchaînement progressif */
+const cleGroupe = e => e.chaine ? "c" + e.chaine : "v" + e.v;
+function debutGroupe(i) { const k = cleGroupe(seq[i]); while (i > 0 && cleGroupe(seq[i - 1]) === k) i--; return i; }
+const DOUBLE_APPUI = 900;
+let dernierSuivant = 0, dernierPrecedent = 0, etaitAuDebut = false, ignorerJusqua = 0;
+function suivant() {
+  if (reg) { tourner(1); return; }
+  const c = courant(); if (!c || !seq.length) { deplacer(1, true); return; }
+  const t = Date.now(); if (t < ignorerJusqua) return;
+  if (t - dernierSuivant < DOUBLE_APPUI) { dernierSuivant = 0; deplacer(1, true); return; }
+  const k = cleGroupe(seq[idx]); let i = idx;
+  while (i < seq.length && cleGroupe(seq[i]) === k) i++;
+  if (i >= seq.length) { dernierSuivant = 0; ignorerJusqua = t + DOUBLE_APPUI; deplacer(1, true); return; }
+  dernierSuivant = t; idx = i; erreurs = 0; chargerEtape(true);
+}
 function precedent() {
   if (reg) { tourner(-1); return; }
-  const c = courant(); if (!c) return;
-  if (Date.now() - debutBoucle > 4000) choisirBoucle(c.pl.id, c.b.id, true); else deplacer(-1, true);
+  const c = courant(); if (!c || !seq.length) return;
+  const t = Date.now(); if (t < ignorerJusqua) return;
+  if (t - dernierPrecedent < DOUBLE_APPUI) {
+    dernierPrecedent = 0;
+    if (etaitAuDebut) deplacer(-1, true); else choisirBoucle(c.pl.id, c.b.id, true);
+    return;
+  }
+  const d = debutGroupe(idx);
+  etaitAuDebut = d === 0;
+  dernierPrecedent = t; erreurs = 0;
+  const entame = phase === "silence" || idx > d || au.currentTime > 3;
+  if (entame) idx = d;
+  else if (d > 0) idx = debutGroupe(d - 1);
+  else { dernierPrecedent = 0; ignorerJusqua = t + DOUBLE_APPUI; deplacer(-1, true); return; }
+  chargerEtape(true);
 }
 function basculer() {
   if (reg) { valider(); return; }
@@ -412,7 +440,7 @@ if ("mediaSession" in navigator) {
   const poser = (a, f) => { try { navigator.mediaSession.setActionHandler(a, f); } catch (_) {} };
   poser("play", () => { if (reg) valider(); else if (Date.now() - instantPause < 1500) entrerReglage(); else lire(); });
   poser("pause", () => { if (reg) { valider(); return; } veutLire = false; au.pause(); instantPause = Date.now(); });
-  poser("nexttrack", () => deplacer(1, true));
+  poser("nexttrack", () => suivant());
   poser("previoustrack", () => precedent());
 }
 
@@ -478,7 +506,7 @@ function apresModif(idModifie) {
 
 /* ---------- Interactions ---------- */
 $("b-lecture").onclick = basculer;
-$("b-suiv").onclick = () => deplacer(1, true);
+$("b-suiv").onclick = suivant;
 $("b-prec").onclick = precedent;
 
 $("rail").onclick = ev => {
