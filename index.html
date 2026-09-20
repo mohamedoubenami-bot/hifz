@@ -56,12 +56,10 @@ button{cursor:pointer;-webkit-tap-highlight-color:transparent}
 .message{min-height:22px;margin:12px 0 0;font-size:14px;color:var(--cadran-or)}
 
 /* Mode voiture : lecteur plein écran, gros boutons */
-#b-quitter-voiture{display:none}
 .entrer-voiture{width:100%;margin-top:10px;border:0;border-radius:18px;padding:18px;font-weight:700;font-size:18px;background:var(--cadran-or);color:#0E2A33}
 body.voiture{overflow:hidden}
 body.voiture .cadran{position:fixed;inset:0;z-index:50;border-radius:0;display:flex;flex-direction:column;gap:6px;
   padding:calc(env(safe-area-inset-top,0px) + 10px) max(14px,env(safe-area-inset-right,0px)) calc(env(safe-area-inset-bottom,0px) + 14px) max(14px,env(safe-area-inset-left,0px))}
-body.voiture #b-quitter-voiture{display:block;align-self:flex-end;border:1.5px solid rgba(255,255,255,.3);background:none;color:var(--cadran-texte);border-radius:14px;padding:12px 18px;font-weight:700;font-size:16px}
 body.voiture #b-reglage{display:none}
 body.voiture .cadran-haut{font-size:20px}
 body.voiture .anneau{width:auto;aspect-ratio:auto;margin:0;flex:1;min-height:0;display:flex;align-items:center;justify-content:center}
@@ -80,11 +78,39 @@ body.voiture .commandes .lecture svg{width:84px;height:84px}
 @media (orientation:landscape){
   body.voiture .cadran{display:grid;grid-template-columns:1fr 1.2fr;grid-template-rows:auto auto 1fr auto auto;column-gap:16px}
   body.voiture .cadran>*{grid-column:1}
-  body.voiture #b-quitter-voiture{justify-self:start}
   body.voiture .commandes{grid-column:2;grid-row:1/-1;height:auto;margin-top:0}
   body.voiture .nom-ar{font-size:clamp(40px,9vw,80px)}
   body.voiture .verset{font-size:clamp(26px,5vw,44px)}
 }
+
+/* Mode voiture : grand panneau de choix, pour l'arrêt */
+.barre-voiture{display:none}
+body.voiture .barre-voiture{display:flex;gap:10px}
+body.voiture .barre-voiture button{flex:1;border:1.5px solid rgba(255,255,255,.3);background:none;color:var(--cadran-texte);border-radius:16px;padding:16px 10px;font-weight:700;font-size:19px}
+body.voiture .barre-voiture #b-panneau{background:rgba(255,255,255,.14);border-color:transparent}
+#panneau{position:fixed;inset:0;z-index:60;background:var(--cadran);color:var(--cadran-texte);overflow-y:auto;-webkit-overflow-scrolling:touch;
+  padding:calc(env(safe-area-inset-top,0px) + 10px) max(14px,env(safe-area-inset-right,0px)) calc(env(safe-area-inset-bottom,0px) + 20px) max(14px,env(safe-area-inset-left,0px))}
+#panneau h3{font-size:22px;margin:22px 4px 10px;color:var(--cadran-doux);font-weight:600}
+#panneau .gros{display:block;width:100%;border:0;border-radius:20px;background:rgba(255,255,255,.1);color:inherit;text-align:left;padding:20px 20px;margin:0 0 10px;font-size:24px;font-weight:700;min-height:76px}
+#panneau .gros small{display:block;font-size:17px;font-weight:500;color:var(--cadran-doux);margin-top:2px}
+#panneau .gros:active{background:rgba(255,255,255,.25)}
+#panneau .gros.actif{background:var(--cadran-or);color:#0E2A33}
+#panneau .gros.actif small{color:#0E2A33}
+#panneau .gros.fermer{text-align:center;background:none;border:1.5px solid rgba(255,255,255,.3);position:sticky;top:0;background:var(--cadran);z-index:1}
+#panneau .gros.creer{text-align:center;border:2px dashed rgba(255,255,255,.35);background:none}
+#panneau .grille{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:0 10px}
+body.voiture dialog{width:min(96vw,620px);max-height:94vh}
+body.voiture .fiche h3{font-size:24px}
+body.voiture .fiche .champ{padding:14px 0}
+body.voiture .fiche label{font-size:19px}
+body.voiture .fiche select,body.voiture .fiche input[type=number]{font-size:20px;padding:14px 12px}
+body.voiture .fiche input[type=number]{width:100px}
+body.voiture .coche input{width:28px;height:28px}
+body.voiture .pied button{padding:20px;font-size:20px}
+
+/* Taille de l'affichage, réglable (presbytie) */
+main,dialog{zoom:var(--echelle,1.2)}
+body.voiture main,body.voiture dialog{zoom:1}
 
 /* Playlists */
 .rail{display:flex;gap:8px;overflow-x:auto;padding:2px 4px 8px;scrollbar-width:none}
@@ -104,8 +130,8 @@ body.voiture .commandes .lecture svg{width:84px;height:84px}
 .en-cours .rang{background:var(--or);border-color:var(--or);color:var(--surface)}
 .boucle-titre{font-weight:600;display:block}
 .boucle-desc{font-size:13.5px;color:var(--encre-2);display:block}
-.boucle-actions{display:flex;align-items:center;padding-right:6px}
-.boucle-actions button{border:0;background:none;width:36px;height:44px;color:var(--encre-2);font-size:16px}
+.boucle-actions{display:flex;align-items:center;padding-right:10px}
+.boucle-actions button{border:1.5px solid var(--trait);background:none;border-radius:12px;padding:9px 12px;min-height:44px;color:var(--celadon);font-weight:700;font-size:15px}
 .boucle-actions button:disabled{opacity:.25}
 .vide{padding:22px 18px;color:var(--encre-2);background:var(--surface);border-radius:20px}
 .ajouter{width:100%;margin-top:10px;border:0;border-radius:16px;padding:15px;font-weight:700;background:var(--encre);color:var(--fond)}
@@ -123,7 +149,7 @@ body.voiture .commandes .lecture svg{width:84px;height:84px}
 .volant dd{margin:0;color:var(--encre-2)}
 .note{font-size:14px;color:var(--encre-2);margin:10px 6px}
 
-dialog{border:0;border-radius:24px;padding:0;width:min(94vw,480px);max-height:88vh;background:var(--surface);color:var(--encre)}
+dialog{border:0;border-radius:24px;padding:0;width:min(calc(94vw / var(--echelle,1.2)),480px);max-height:calc(88vh / var(--echelle,1.2));overflow-y:auto;background:var(--surface);color:var(--encre)}
 dialog::backdrop{background:rgba(5,20,25,.6)}
 .fiche{padding:18px 18px 16px}
 .fiche h3{margin:0 0 6px;font-size:19px}
@@ -134,6 +160,12 @@ dialog::backdrop{background:rgba(5,20,25,.6)}
 .coche{display:flex;gap:10px;align-items:center;font-weight:500}
 .coche input{width:20px;height:20px;accent-color:var(--celadon)}
 .pied{display:flex;gap:10px;margin-top:14px}
+.pied button:disabled{opacity:.3}
+#f-gestion{flex-wrap:wrap}
+#f-supprimer{flex-basis:100%}
+.fiche .duo input[type=number]{width:70px}
+.fiche .champ{flex-wrap:wrap}
+.fiche .pied button{padding:13px 8px}
 .pied button{flex:1;border-radius:14px;padding:13px;font-weight:700;border:1.5px solid var(--trait);background:none}
 .pied .principal{background:var(--encre);border-color:var(--encre);color:var(--fond)}
 [hidden]{display:none!important}
@@ -145,7 +177,7 @@ dialog::backdrop{background:rgba(5,20,25,.6)}
   <h1>Hifz au volant</h1>
 
   <section class="cadran" aria-label="Lecteur">
-    <button id="b-quitter-voiture">Quitter le mode voiture</button>
+    <div class="barre-voiture"><button id="b-panneau">Playlists et boucles</button><button id="b-quitter-voiture">Quitter</button></div>
     <div class="cadran-haut"><span id="p-playlist"></span><b id="p-rang"></b></div>
     <div class="anneau" id="anneau">
       <svg viewBox="0 0 100 100" aria-hidden="true">
@@ -184,17 +216,21 @@ dialog::backdrop{background:rgba(5,20,25,.6)}
     <div><dt>Lecture, pause</dt><dd>Mets en pause pour réciter seul, puis reprends.</dd></div>
     <div><dt>Pause puis lecture, vite</dt><dd>Ouvre le réglage : suivant et précédent changent la valeur affichée sur l'écran de la voiture, pause valide. Le premier choix proposé est la suite de ta boucle en cours ; sinon tu choisis la sourate, les versets, les répétitions et le mode, puis la boucle démarre.</dd></div>
   </dl>
-  <p class="note">Le bouton « Mode voiture » sous le lecteur affiche le lecteur en plein écran avec de gros boutons et garde l'écran allumé. Lance la lecture une fois sur le téléphone avant de démarrer. Ensuite tout se pilote depuis le volant, ou l'écran « En lecture » de CarPlay. Garde cette page ouverte dans Safari.</p>
+  <p class="note">Le bouton « Mode voiture » sous le lecteur affiche le lecteur en plein écran avec de gros boutons et garde l'écran allumé. « Playlists et boucles » y ouvre de grandes listes pour changer de boucle ou en créer une, à l'arrêt uniquement. Lance la lecture une fois sur le téléphone avant de démarrer. Ensuite tout se pilote depuis le volant, ou l'écran « En lecture » de CarPlay. Garde cette page ouverte dans Safari.</p>
 
   <h2>Réglages</h2>
   <div class="reglages">
     <div class="champ"><label for="r-recitateur">Récitateur</label><select id="r-recitateur"></select></div>
     <div class="champ"><label for="r-vitesse">Vitesse</label>
       <select id="r-vitesse"><option value="0.75">Lente (×0,75)</option><option value="0.9">Posée (×0,9)</option><option value="1">Normale</option><option value="1.15">Rapide (×1,15)</option><option value="1.3">Révision (×1,3)</option></select></div>
+    <div class="champ"><label for="r-taille">Taille de l'affichage</label>
+      <select id="r-taille"><option value="1">Normale</option><option value="1.2">Grande</option><option value="1.4">Très grande</option></select></div>
     <div class="champ"><label>Mes playlists</label><button class="lien" id="b-sauvegarde">Sauvegarder ou importer</button></div>
   </div>
   <p class="note">Audio verset par verset fourni par <a href="https://everyayah.com" style="color:var(--celadon)">everyayah.com</a>. Une connexion de données est nécessaire en route.</p>
 </main>
+
+<div id="panneau" hidden></div>
 
 <audio id="au" preload="auto"></audio>
 
@@ -214,6 +250,7 @@ dialog::backdrop{background:rgba(5,20,25,.6)}
       <select id="f-passages"><option value="0">En continu, jusqu'à « suivant »</option><option value="1">1, puis boucle suivante</option><option value="2">2, puis boucle suivante</option><option value="3">3, puis boucle suivante</option><option value="5">5, puis boucle suivante</option><option value="10">10, puis boucle suivante</option></select></div>
     <div class="champ"><label for="f-pause">Silence pour réciter</label>
       <select id="f-pause"><option value="0">Aucun</option><option value="1">Durée du verset</option><option value="1.5">Durée × 1,5</option><option value="2">Durée × 2</option></select></div>
+    <div class="pied" id="f-gestion"><button type="button" id="f-monter">Monter</button><button type="button" id="f-descendre">Descendre</button><button type="button" id="f-supprimer" style="color:var(--danger)">Supprimer</button></div>
     <div class="pied"><button type="button" id="f-annuler">Annuler</button><button type="submit" class="principal" id="f-valider">Ajouter la boucle</button></div>
   </form>
 </dialog>
@@ -252,7 +289,7 @@ const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;"
 function etatParDefaut() {
   const b = (s, a) => ({ id: uid(), s, de: 1, a, rep: 3, mode: "simple", passages: 0, pause: 0 });
   const pl = { id: uid(), nom: "Pour commencer", boucles: [b(114, 6), b(113, 5), b(112, 4)] };
-  return { recitateur: "Husary_128kbps", vitesse: 1, playlists: [pl], vue: pl.id, cur: { plId: pl.id, bId: pl.boucles[0].id } };
+  return { recitateur: "Husary_128kbps", vitesse: 1, taille: 1.2, playlists: [pl], vue: pl.id, cur: { plId: pl.id, bId: pl.boucles[0].id } };
 }
 function nettoyer(e) {
   if (!e || !Array.isArray(e.playlists)) return null;
@@ -268,6 +305,7 @@ function nettoyer(e) {
   if (!e.playlists.length) e.playlists = [{ id: uid(), nom: "Ma playlist", boucles: [] }];
   if (!RECITATEURS.some(r => r[0] === e.recitateur)) e.recitateur = RECITATEURS[0][0];
   e.vitesse = +e.vitesse || 1;
+  e.taille = [1, 1.2, 1.4].includes(+e.taille) ? +e.taille : 1.2;
   if (!e.playlists.some(p => p.id === e.vue)) e.vue = e.playlists[0].id;
   if (!e.cur) e.cur = { plId: null, bId: null };
   return e;
@@ -515,16 +553,13 @@ function majPlaylists() {
     '<button class="puce nouvelle" data-pl="+">Nouvelle playlist</button>';
 }
 function majBoucles() {
+  majPanneau();
   const pl = playlistVue(), z = $("zone-boucles");
   if (!pl.boucles.length) { z.innerHTML = '<p class="vide">Cette playlist est vide. Ajoute une boucle : une sourate entière, quelques versets, ou une sourate découpée en petites boucles.</p>'; return; }
   z.innerHTML = '<ol class="boucles">' + pl.boucles.map((b, i) =>
     '<li class="' + (b.id === etat.cur.bId ? "en-cours" : "") + '">' +
     '<button class="boucle-jouer" data-act="jouer" data-id="' + b.id + '"><span class="rang">' + (i + 1) + '</span><span><span class="boucle-titre">' + esc(titreBoucle(b)) + '</span><span class="boucle-desc">' + esc(decrire(b)) + "</span></span></button>" +
-    '<span class="boucle-actions">' +
-    '<button data-act="monter" data-id="' + b.id + '" aria-label="Monter"' + (i === 0 ? " disabled" : "") + ">▲</button>" +
-    '<button data-act="descendre" data-id="' + b.id + '" aria-label="Descendre"' + (i === pl.boucles.length - 1 ? " disabled" : "") + ">▼</button>" +
-    '<button data-act="modifier" data-id="' + b.id + '" aria-label="Modifier">✎</button>' +
-    '<button data-act="supprimer" data-id="' + b.id + '" aria-label="Supprimer">✕</button></span></li>').join("") + "</ol>";
+    '<span class="boucle-actions"><button data-act="modifier" data-id="' + b.id + '">Modifier</button></span></li>').join("") + "</ol>";
 }
 function majTout() { majPlaylists(); majBoucles(); majLecteur(); }
 
@@ -554,8 +589,31 @@ function modeVoiture(actif) {
   etat.voiture = !!actif; enregistrer();
   document.body.classList.toggle("voiture", etat.voiture);
   garderEcran(etat.voiture);
-  if (etat.voiture) window.scrollTo(0, 0);
+  if (etat.voiture) window.scrollTo(0, 0); else ouvrirPanneau(false);
 }
+/* Grand panneau : choisir une playlist ou une boucle à l'arrêt */
+function majPanneau() {
+  const z = $("panneau"); if (z.hidden) return;
+  const pl = playlistVue();
+  z.innerHTML = '<button class="gros fermer" data-p="fermer">Retour au lecteur</button>' +
+    "<h3>Playlists</h3><div class=\"grille\">" + etat.playlists.map(p =>
+      '<button class="gros' + (p.id === pl.id ? " actif" : "") + '" data-p="pl" data-id="' + p.id + '">' + esc(p.nom) + "<small>" + p.boucles.length + (p.boucles.length > 1 ? " boucles" : " boucle") + "</small></button>").join("") + "</div>" +
+    "<h3>Boucles de « " + esc(pl.nom) + " »</h3><div class=\"grille\">" + pl.boucles.map((b, i) =>
+      '<button class="gros' + (b.id === etat.cur.bId ? " actif" : "") + '" data-p="b" data-id="' + b.id + '">' + (i + 1) + ". " + esc(titreBoucle(b)) + "<small>" + esc(decrire(b)) + "</small></button>").join("") + "</div>" +
+    '<button class="gros creer" data-p="creer">Nouvelle boucle</button>';
+}
+function ouvrirPanneau(ouvert) { $("panneau").hidden = !ouvert; if (ouvert) { const c = courant(); if (c) etat.vue = c.pl.id; majPanneau(); $("panneau").scrollTop = 0; } }
+$("b-panneau").onclick = () => ouvrirPanneau(true);
+$("panneau").onclick = ev => {
+  const el = ev.target.closest("[data-p]"); if (!el) return;
+  const a = el.dataset.p;
+  if (a === "fermer") ouvrirPanneau(false);
+  else if (a === "pl") { etat.vue = el.dataset.id; enregistrer(); majPlaylists(); majBoucles(); }
+  else if (a === "b") { choisirBoucle(playlistVue().id, el.dataset.id, true); ouvrirPanneau(false); }
+  else if (a === "creer") ouvrirFiche(null);
+};
+function appliquerTaille() { document.documentElement.style.setProperty("--echelle", etat.taille); $("r-taille").value = etat.taille; }
+$("r-taille").onchange = ev => { etat.taille = +ev.target.value; enregistrer(); appliquerTaille(); };
 $("b-voiture").onclick = () => modeVoiture(true);
 $("b-quitter-voiture").onclick = () => modeVoiture(false);
 document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible" && etat.voiture) garderEcran(true); });
@@ -584,10 +642,7 @@ $("zone-boucles").onclick = ev => {
   const pl = playlistVue(), i = pl.boucles.findIndex(b => b.id === el.dataset.id); if (i < 0) return;
   const act = el.dataset.act;
   if (act === "jouer") choisirBoucle(pl.id, pl.boucles[i].id, true);
-  else if (act === "monter" && i > 0) { [pl.boucles[i - 1], pl.boucles[i]] = [pl.boucles[i], pl.boucles[i - 1]]; apresModif(null); }
-  else if (act === "descendre" && i < pl.boucles.length - 1) { [pl.boucles[i + 1], pl.boucles[i]] = [pl.boucles[i], pl.boucles[i + 1]]; apresModif(null); }
   else if (act === "modifier") ouvrirFiche(pl.boucles[i]);
-  else if (act === "supprimer") { if (confirm("Supprimer la boucle « " + titreBoucle(pl.boucles[i]) + " » ?")) { pl.boucles.splice(i, 1); apresModif(null); } }
 };
 
 /* Fiche d'une boucle */
@@ -604,6 +659,8 @@ function ouvrirFiche(b) {
   $("f-titre").textContent = b ? "Modifier la boucle" : "Nouvelle boucle";
   $("f-valider").textContent = b ? "Enregistrer" : "Ajouter la boucle";
   $("f-decoupe-ligne").hidden = !!b; $("f-decoupe").checked = false;
+  $("f-gestion").hidden = !b;
+  if (b) { const l = playlistVue().boucles, i = l.indexOf(b); $("f-monter").disabled = i <= 0; $("f-descendre").disabled = i < 0 || i >= l.length - 1; }
   const dern = playlistVue().boucles.slice(-1)[0];
   const m = b || { s: dern ? dern.s : 78, rep: dern ? dern.rep : 3, mode: dern ? dern.mode : "simple", passages: dern ? dern.passages : 0, pause: dern ? dern.pause : 0 };
   $("f-sourate").value = m.s; bornerVersets(!b);
@@ -611,8 +668,21 @@ function ouvrirFiche(b) {
   if (![...$("f-rep").options].some(o => +o.value === m.rep)) $("f-rep").add(new Option(m.rep + " fois", m.rep));
   $("f-rep").value = m.rep;
   $("f-mode").value = m.mode; $("f-passages").value = [0, 1, 2, 3, 5, 10].includes(m.passages) ? m.passages : 0; $("f-pause").value = m.pause;
-  $("d-boucle").showModal();
+  $("d-boucle").showModal(); $("d-boucle").scrollTop = 0;
 }
+function bougerEnEdition(sens) {
+  const l = playlistVue().boucles, i = l.indexOf(enEdition), j = i + sens; if (i < 0 || j < 0 || j >= l.length) return;
+  [l[i], l[j]] = [l[j], l[i]]; apresModif(null);
+  $("f-monter").disabled = j <= 0; $("f-descendre").disabled = j >= l.length - 1;
+  dire("Boucle déplacée en position " + (j + 1) + ".");
+}
+$("f-monter").onclick = () => bougerEnEdition(-1);
+$("f-descendre").onclick = () => bougerEnEdition(1);
+$("f-supprimer").onclick = () => {
+  const l = playlistVue().boucles, i = l.indexOf(enEdition); if (i < 0) return;
+  if (!confirm("Supprimer la boucle « " + titreBoucle(enEdition) + " » ?")) return;
+  l.splice(i, 1); $("d-boucle").close(); apresModif(null);
+};
 $("b-ajouter").onclick = () => ouvrirFiche(null);
 $("f-annuler").onclick = () => $("d-boucle").close();
 $("f-boucle").onsubmit = ev => {
@@ -741,7 +811,7 @@ $("b-reglage").onclick = () => { if (reg) quitterReglage(); else entrerReglage()
   const c = courant();
   if (c) { seq = construireSequence(c.b); etat.vue = c.pl.id; chargerEtape(false); }
   else { const f = aPlat(); if (f.length) choisirBoucle(f[0][0], f[0][1], false); }
-  majTout();
+  appliquerTaille(); majTout();
   if (etat.voiture) modeVoiture(true);
 })();
 </script>
